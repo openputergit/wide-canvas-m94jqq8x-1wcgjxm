@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ImageVault - Secure Image Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        .modal {
+            transition: opacity 0.25s ease;
+        }
+        body { 
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        .image-card {
+            transition: transform 0.3s ease;
+        }
+        .image-card:hover {
+            transform: scale(1.02);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <nav class="bg-blue-600 text-white p-4 shadow-md">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold">ImageVault</h1>
+            <div id="navLinks" class="hidden md:flex space-x-4">
+                <button class="nav-btn hover:text-blue-200" onclick="showSection('home')" id="homeBtn">Home</button>
+                <button class="nav-btn hover:text-blue-200" onclick="showSection('gallery')" id="galleryBtn">Gallery</button>
+                <button class="nav-btn hover:text-blue-200" onclick="showSection('profile')" id="profileBtn">Profile</button>
+                <button class="nav-btn hover:text-blue-200" onclick="logout()" id="logoutBtn">Logout</button>
+            </div>
+            <button class="md:hidden" onclick="toggleMenu()">
+                <i class="bi bi-list text-2xl"></i>
+            </button>
+        </div>
+    </nav>
+
+    <div id="mobileMenu" class="hidden bg-blue-500 p-4 text-white">
+        <div class="flex flex-col space-y-2">
+            <button class="nav-btn hover:text-blue-200" onclick="showSection('home')">Home</button>
+            <button class="nav-btn hover:text-blue-200" onclick="showSection('gallery')">Gallery</button>
+            <button class="nav-btn hover:text-blue-200" onclick="showSection('profile')">Profile</button>
+            <button class="nav-btn hover:text-blue-200" onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <!-- Auth Section -->
+    <div id="authSection" class="container mx-auto mt-10 p-4">
+        <div class="max-w-md mx-auto bg-white rounded-lg shadow-md p-6">
+            <h1 class="text-3xl font-bold text-center text-blue-600 mb-6">ImageVault</h1>
+            <p class="text-gray-600 text-center mb-6">Your secure platform for managing and sharing images</p>
+            <div class="flex justify-center mb-4">
+                <button onclick="toggleAuth('login')" id="loginTabBtn" class="px-4 py-2 bg-blue-500 text-white rounded-l">Login</button>
+                <button onclick="toggleAuth('register')" id="registerTabBtn" class="px-4 py-2 bg-gray-200 rounded-r">Register</button>
+            </div>
+            <form id="loginForm" class="space-y-4">
+                <div class="space-y-2">
+                    <label for="loginEmail" class="block text-gray-700">Email</label>
+                    <input type="email" placeholder="Enter your email" class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500" id="loginEmail" required>
+                </div>
+                <div class="space-y-2">
+                    <label for="loginPassword" class="block text-gray-700">Password</label>
+                    <input type="password" placeholder="Enter your password" class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500" id="loginPassword" required>
+                </div>
+                <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition duration-300">Login</button>
+            </form>
+            <form id="registerForm" class="hidden space-y-4">
+                <div class="space-y-2">
+                    <label for="regUsername" class="block text-gray-700">Username</label>
+                    <input type="text" placeholder="Choose a username" class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500" id="regUsername" required>
+                </div>
+                <div class="space-y-2">
+                    <label for="regEmail" class="block text-gray-700">Email</label>
+                    <input type="email" placeholder="Enter your email" class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500" id="regEmail" required>
+                </div>
+                <div class="space-y-2">
+                    <label for="regPassword" class="block text-gray-700">Password</label>
+                    <input type="password" placeholder="Create a password" class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500" id="regPassword" required>
+                </div>
+                <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition duration-300">Register</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div id="mainContent" class="hidden container mx-auto mt-6 p-4 pb-16">
+        <!-- Home Section -->
+        <div id="home" class="space-y-6">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-2xl font-bold mb-4 text-gray-800">Create New Post</h2>
+                <form id="postForm" class="space-y-4">
+                    <textarea placeholder="What's on your mind?" class="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500" id="postContent" rows="3"></textarea>
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-4">
+                        <div class="text-center">
+                            <i class="bi bi-cloud-upload text-4xl text-gray-400"></i>
+                            <p class="mt-2 text-sm text-gray-500">Drag and drop an image or click to browse</p>
+                        </div>
+                        <input type="file" accept="image/*" class="w-full mt-2 p-2" id="imageUpload">
+                        <div id="imagePreview" class="mt-2 hidden">
+                            <img id="previewImg" class="max-h-64 rounded mx-auto">
+                        </div>
+                    </div>
+                    <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition duration-300 flex items-center">
+                        <i class="bi bi-send mr-2"></i> Post
+                    </button>
+                </form>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-700 mt-8 mb-2">Your Posts</h3>
+            <div id="posts" class="space-y-4"></div>
+            <div id="noPosts" class="hidden bg-white rounded-lg shadow-md p-6 text-center text-gray-500">
+                <i class="bi bi-journal-text text-4xl"></i>
+                <p class="mt-2">You haven't created any posts yet.</p>
+            </div>
+        </div>
+
+        <!-- Gallery Section -->
+        <div id="gallery" class="hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">My Gallery</h2>
+            </div>
+            <div id="imageGallery" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"></div>
+            <div id="noImages" class="hidden bg-white rounded-lg shadow-md p-10 text-center text-gray-500">
+                <i class="bi bi-images text-5xl"></i>
+                <p class="mt-3">You haven't uploaded any images yet.</p>
+                <button onclick="showSection('home')" class="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition duration-300">
+                    Create Your First Post
+                </button>
+            </div>
+        </div>
+
+        <!-- Image Modal -->
+        <div id="imageModal" class="fixed inset-0 hidden bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
+            <div class="relative max-w-4xl w-full">
+                <button onclick="closeModal()" class="absolute top-0 right-0 -mt-12 text-white text-3xl hover:text-gray-300">&times;</button>
+                <img id="modalImage" class="max-h-[80vh] w-auto mx-auto">
+            </div>
+        </div>
+
+        <!-- Profile Section -->
+        <div id="profile" class="hidden">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center mb-6">
+                    <div class="bg-blue-100 p-4 rounded-full text-blue-600">
+                        <i class="bi bi-person-circle text-4xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h2 class="text-2xl font-bold text-gray-800">My Profile</h2>
+                        <p class="text-gray-500">Manage your account information</p>
+                    </div>
+                </div>
+                <div id="profileInfo" class="space-y-4 border-b pb-6 mb-6">
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                        <p class="text-gray-700"><span class="font-semibold">Username:</span> <span id="profileUsername"></span></p>
+                        <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Registered User</span>
+                    </div>
+                    <p class="text-gray-700"><span class="font-semibold">Email:</span> <span id="profileEmail"></span></p>
+                    <p class="text-gray-700"><span class="font-semibold">Member since:</span> <span id="profileDate"><?php echo date('F j, Y'); ?></span></p>
+                </div>
+                <div class="space-y-4">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">Change Password</h3>
+                    <form id="passwordChangeForm" class="space-y-4">
+                        <div class="space-y-2">
+                            <label for="currentPassword" class="block text-gray-700">Current Password</label>
+                            <input type="password" placeholder="Enter current password" class="w-full p-2 border rounded" id="currentPassword" required>
+                        </div>
+                        <div class="space-y-2">
+                            <label for="newPassword" class="block text-gray-700">New Password</label>
+                            <input type="password" placeholder="Enter new password" class="w-full p-2 border rounded" id="newPassword" required>
+                        </div>
+                        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition duration-300 flex items-center">
+                            <i class="bi bi-key mr-2"></i> Update Password
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simulated database
+        const db = {
+            users: [],
+            posts: [],
+            images: []
+        };
+
+        let currentUser = null;
+
+        // Auth functions
+        function toggleAuth(type) {
+            const loginForm = document.getElementById('loginForm');
+            const registerForm = document.getElementById('registerForm');
+            const loginTabBtn = document.getElementById('loginTabBtn');
+            const registerTabBtn = document.getElementById('registerTabBtn');
+            
+            if (type === 'login') {
+                loginForm.classList.remove('hidden');
+                registerForm.classList.add('hidden');
+                loginTabBtn.classList.replace('bg-gray-200', 'bg-blue-500');
+                loginTabBtn.classList.replace('text-gray-700', 'text-white');
+                registerTabBtn.classList.replace('bg-blue-500', 'bg-gray-200');
+                registerTabBtn.classList.replace('text-white', 'text-gray-700');
+            } else {
+                loginForm.classList.add('hidden');
+                registerForm.classList.remove('hidden');
+                registerTabBtn.classList.replace('bg-gray-200', 'bg-blue-500');
+                registerTabBtn.classList.replace('text-gray-700', 'text-white');
+                loginTabBtn.classList.replace('bg-blue-500', 'bg-gray-200');
+                loginTabBtn.classList.replace('text-white', 'text-gray-700');
+            }
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const user = db.users.find(u => u.email === email && u.password === password);
+            if (user) {
+                currentUser = user;
+                document.getElementById('authSection').classList.add('hidden');
+                document.getElementById('mainContent').classList.remove('hidden');
+                document.getElementById('navLinks').classList.remove('hidden');
+                updateProfile();
+                loadGallery();
+                loadPosts();
+                showSection('home');
+            } else {
+                alert('Invalid credentials!');
+            }
+        });
+
+        document.getElementById('registerForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const username = document.getElementById('regUsername').value;
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPassword').value;
+            if (db.users.some(u => u.email === email)) {
+                alert('Email already registered!');
+                return;
+            }
+            const registrationDate = new Date().toISOString();
+            db.users.push({ username, email, password, registrationDate });
+            alert('Registration successful! You can now log in.');
+            toggleAuth('login');
+        });
+
+        // Content management functions
+        function showSection(section) {
+            ['home', 'gallery', 'profile'].forEach(s => {
+                document.getElementById(s).classList.add('hidden');
+            });
+            document.getElementById(section).classList.remove('hidden');
+            
+            //Close mobile menu if open
+            document.getElementById('mobileMenu').classList.add('hidden');
+        }
+
+        // Image preview functionality
+        document.getElementById('imageUpload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file && file.type.match('image.*')) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const previewDiv = document.getElementById('imagePreview');
+                    const previewImg = document.getElementById('previewImg');
+                    previewImg.src = e.target.result;
+                    previewDiv.classList.remove('hidden');
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        document.getElementById('postForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const content = document.getElementById('postContent').value;
+            const imageFile = document.getElementById('imageUpload').files[0];
+            let imageUrl = '';
+            if (imageFile) {
+                imageUrl = await readFileAsDataURL(imageFile);
+                db.images.push({ 
+                    userId: currentUser.email, 
+                    url: imageUrl,
+                    timestamp: new Date().toISOString(),
+                    title: imageFile.name,
+                    size: imageFile.size
+                });
+            }
+            db.posts.push({
+                userId: currentUser.email,
+                content,
+                imageUrl,
+                username: currentUser.username,
+                timestamp: new Date().toISOString()
+            });
+            loadPosts();
+            loadGallery();
+            document.getElementById('postForm').reset();
+            document.getElementById('imagePreview').classList.add('hidden');
+        });
+
+        function readFileAsDataURL(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function loadPosts() {
+            const postsContainer = document.getElementById('posts');
+            const noPosts = document.getElementById('noPosts');
+            postsContainer.innerHTML = '';
+            
+            const userPosts = db.posts.filter(post => post.userId === currentUser.email);
+            
+            if (userPosts.length === 0) {
+                noPosts.classList.remove('hidden');
+            } else {
+                noPosts.classList.add('hidden');
+                
+                userPosts.reverse().forEach(post => {
+                    const postElement = document.createElement('div');
+                    postElement.className = 'bg-white rounded-lg shadow-md p-6';
+                    postElement.innerHTML = `
+                        <div class="flex items-center mb-4">
+                            <div class="bg-blue-100 p-2 rounded-full">
+                                <i class="bi bi-person-fill text-blue-600"></i>
+                            </div>
+                            <div class="ml-3">
+                                <p class="font-bold">${post.username}</p>
+                                <p class="text-xs text-gray-500">${new Date(post.timestamp).toLocaleString()}</p>
+                            </div>
+                        </div>
+                        <p class="mb-4 text-gray-700">${post.content}</p>
+                        ${post.imageUrl ? `
+                            <div class="mt-3 mb-2 cursor-pointer" onclick="openImageModal('${post.imageUrl}')">
+                                <img src="${post.imageUrl}" class="w-full max-h-96 object-cover rounded">
+                            </div>
+                        ` : ''}
+                    `;
+                    postsContainer.appendChild(postElement);
+                });
+            }
+        }
+
+        function loadGallery() {
+            const gallery = document.getElementById('imageGallery');
+            const noImages = document.getElementById('noImages');
+            gallery.innerHTML = '';
+            
+            const userImages = db.images.filter(img => img.userId === currentUser.email);
+            
+            if (userImages.length === 0) {
+                noImages.classList.remove('hidden');
+            } else {
+                noImages.classList.add('hidden');
+                userImages.reverse().forEach(img => {
+                    const imgElement = document.createElement('div');
+                    imgElement.className = 'image-card bg-white rounded-lg shadow-md overflow-hidden';
+                    
+                    // Format time
+                    const uploadDate = new Date(img.timestamp).toLocaleDateString();
+                    
+                    // Format file size
+                    let fileSize = '';
+                    if (img.size) {
+                        fileSize = img.size < 1024 * 1024 
+                            ? `${Math.round(img.size / 1024)} KB` 
+                            : `${(img.size / (1024 * 1024)).toFixed(1)} MB`;
+                    }
+                    
+                    imgElement.innerHTML = `
+                        <div class="aspect-square cursor-pointer" onclick="openImageModal('${img.url}')">
+                            <img src="${img.url}" class="w-full h-full object-cover">
+                        </div>
+                        <div class="p-3">
+                            <p class="text-sm font-medium truncate" title="${img.title || 'Image'}">${img.title || 'Image'}</p>
+                            <p class="text-xs text-gray-500">${uploadDate}${fileSize ? ' • ' + fileSize : ''}</p>
+                        </div>
+                    `;
+                    gallery.appendChild(imgElement);
+                });
+            }
+        }
+
+        function openImageModal(imageUrl) {
+            const modal = document.getElementById('imageModal');
+            const modalImage = document.getElementById('modalImage');
+            modalImage.src = imageUrl;
+            modal.classList.remove('hidden');
+            
+            // Prevent scrolling on body
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeModal() {
+            const modal = document.getElementById('imageModal');
+            modal.classList.add('hidden');
+            
+            // Re-enable scrolling on body
+            document.body.style.overflow = '';
+        }
+
+        function updateProfile() {
+            document.getElementById('profileUsername').textContent = currentUser.username;
+            document.getElementById('profileEmail').textContent = currentUser.email;
+            
+            // Set registration date
+            const registrationDate = currentUser.registrationDate 
+                ? new Date(currentUser.registrationDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+                : 'Not available';
+            document.getElementById('profileDate').textContent = registrationDate;
+        }
+
+        document.getElementById('passwordChangeForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            if (currentPassword === currentUser.password) {
+                currentUser.password = newPassword;
+                const userIndex = db.users.findIndex(u => u.email === currentUser.email);
+                db.users[userIndex] = currentUser;
+                alert('Password updated successfully!');
+                document.getElementById('passwordChangeForm').reset();
+            } else {
+                alert('Current password is incorrect!');
+            }
+        });
+
+        function logout() {
+            currentUser = null;
+            document.getElementById('authSection').classList.remove('hidden');
+            document.getElementById('mainContent').classList.add('hidden');
+            document.getElementById('navLinks').classList.add('hidden');
+            
+            // Reset forms
+            document.getElementById('loginForm').reset();
+            document.getElementById('registerForm').reset();
+            document.getElementById('postForm').reset();
+            document.getElementById('passwordChangeForm').reset();
+            document.getElementById('imagePreview').classList.add('hidden');
+        }
+
+        function toggleMenu() {
+            const mobileMenu = document.getElementById('mobileMenu');
+            mobileMenu.classList.toggle('hidden');
+        }
+
+        // Event listener for ESC key to close modal
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+
+        // Add some sample data for testing
+        function addSampleData() {
+            // Add sample user
+            db.users.push({
+                username: 'demo',
+                email: 'demo@example.com',
+                password: 'password',
+                registrationDate: new Date().toISOString()
+            });
+        }
+
+        // Initialize with login view
+        toggleAuth('login');
+        addSampleData();
+    </script>
+<script>document.body.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); return }, { passive: false })</script>
+	</body>
+</html>
